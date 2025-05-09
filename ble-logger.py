@@ -13,6 +13,12 @@ load_dotenv()
 LOGFILE = "ble_log.csv"
 SCAN_INTERVAL = 300  # seconds (5 min)
 
+def ensure_csv_headers(filename, headers):
+    if not os.path.exists(filename) or os.stat(filename).st_size == 0:
+        with open(filename, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+
 def load_known_devices(filename):
     known = {}
     try:
@@ -51,6 +57,12 @@ def send_telegram(message):
 KNOWN_DEVICES = load_known_devices("known_devices.csv")
 
 async def scan_ble():
+    UNKNOWN_FILE = "unknown_devices.csv"
+    unknown_devices = load_unknown_devices(UNKNOWN_FILE)
+
+    ensure_csv_headers(LOGFILE, ["Timestamp", "MAC", "Name", "RSSI", "Tag", "Metadata"])
+    ensure_csv_headers(UNKNOWN_FILE, ["MAC", "Name"])
+    
     devices = await BleakScanner.discover()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
