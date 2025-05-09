@@ -5,12 +5,26 @@ from datetime import datetime
 import time
 from dotenv import load_dotenv
 import os
+import csv
 
 # Load environment variables from .env file
 load_dotenv()
 
 LOGFILE = "ble_log.csv"
 SCAN_INTERVAL = 300  # seconds (5 min)
+
+def load_known_devices(filename):
+    known = {}
+    try:
+        with open(filename, newline="") as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                if len(row) == 2:
+                    mac, tag = row
+                    known[mac.strip().upper()] = tag.strip()
+    except FileNotFoundError:
+        print(f"File {filename} not found. Using empty known devices list.")
+    return known
 
 def send_telegram(message):
     token = os.getenv("TOKEN")
@@ -22,11 +36,7 @@ def send_telegram(message):
     except Exception as e:
         print(f"Telegram error: {e}")
 
-# MAC tagging dictionary
-KNOWN_DEVICES = {
-    "D4:CA:6E:12:34:56": "Axon Taser",
-    "00:11:22:33:44:55": "My Phone",
-}
+KNOWN_DEVICES = load_known_devices("known_devices.csv")
 
 async def scan_ble():
     devices = await BleakScanner.discover()
