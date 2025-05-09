@@ -13,6 +13,14 @@ load_dotenv()
 LOGFILE = "ble_log.csv"
 SCAN_INTERVAL = 300  # seconds (5 min)
 
+def is_randomized_mac(mac):
+    try:
+        first_byte = int(mac.split(":")[0], 16)
+        return (first_byte & 0b00000010) != 0
+    except Exception:
+        return False  # Just in case the MAC is malformed
+
+
 def ensure_csv_headers(filename, headers):
     if not os.path.exists(filename) or os.stat(filename).st_size == 0:
         with open(filename, "w", newline="") as f:
@@ -81,7 +89,8 @@ async def scan_ble():
 
             f.write(f"{now},{mac},{name},{rssi},{tag},{details}\n")
 
-            if tag == "Unknown" and mac not in unknown_devices:
+            if tag == "Unknown" and mac not in unknown_devices and not is_randomized_mac(mac):
+
                 with open(UNKNOWN_FILE, "a") as uf:
                     uf.write(f"{mac},{name}\n")
                 unknown_devices.add(mac)
