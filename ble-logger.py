@@ -1,10 +1,26 @@
 import asyncio
+import requests
 from bleak import BleakScanner
 from datetime import datetime
 import time
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
 
 LOGFILE = "ble_log.csv"
 SCAN_INTERVAL = 300  # seconds (5 min)
+
+def send_telegram(message):
+    token = os.getenv("TOKEN")
+    chat_id = os.getenv("CHAT_ID")
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {"chat_id": chat_id, "text": message}
+    try:
+        requests.post(url, data=payload)
+    except Exception as e:
+        print(f"Telegram error: {e}")
 
 # MAC tagging dictionary
 KNOWN_DEVICES = {
